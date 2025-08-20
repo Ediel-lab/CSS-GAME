@@ -5,9 +5,9 @@ import './app.css';
 
 export default function App() {
   // Tamanho do “mundo”
-  const width = 400;
-  const height = 400;
-  const radius = 100;
+  const width = 800;
+  const height = 800;
+  const radius = 200;
 
   // Movimento e dash
   const baseSpeed = 0.05;       // velocidade do player
