@@ -1,36 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
+import './app.css';      // ← não esqueça
 
-export default function Game() {
-  const width = 400;
+export default function App() {
+  const width  = 400;
   const height = 400;
-  const radius = 100;      // Distância fixa do boss
-  const speed = 0.03;      // Velocidade de rotação
+  const radius = 100;
+  const baseSpeed      = 0.03;
+  const dashMultiplier = 3;
+  const dashDuration   = 0.5;
+  const dashKey        = 'Shift';
 
-  const [angle, setAngle] = useState(0);
+  const [angle, setAngle]     = useState(0);
+  const [dashActive, setDash] = useState(false);
   const keys = useRef({ ArrowLeft: false, ArrowRight: false });
 
-  // Captura tecla pressionada
+  // captura teclas
   useEffect(() => {
-    const down = e => {
-      if (e.key in keys.current) keys.current[e.key] = true;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key in keys.current) keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = true;
+      if (e.key === dashKey && !dashActive) {
+        setDash(true);
+        setTimeout(() => setDash(false), dashDuration * 1000);
+      }
     };
-    const up = e => {
-      if (e.key in keys.current) keys.current[e.key] = false;
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key in keys.current) keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = false;
     };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [dashActive]);
 
-  // Loop de animação
+  // loop de animação
   useEffect(() => {
-    let rafId;
+    let rafId: number;
     const loop = () => {
       setAngle(prev => {
         let next = prev;
+        const speed = dashActive ? baseSpeed * dashMultiplier : baseSpeed;
         if (keys.current.ArrowLeft)  next -= speed;
         if (keys.current.ArrowRight) next += speed;
         return next;
@@ -39,48 +49,17 @@ export default function Game() {
     };
     loop();
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [dashActive]);
 
-  // Centro do boss
-  const cx = width  / 2 - 25;  // Ajuste de 25px pra alinhar retângulo
+  const cx = width  / 2 - 25;
   const cy = height / 2 - 25;
-
-  // Posição do player
   const px = cx + radius * Math.cos(angle);
   const py = cy + radius * Math.sin(angle);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: width,
-        height: height,
-        background: '#222',
-      }}
-    >
-      {/* Boss no centro */}
-      <div
-        style={{
-          position: 'absolute',
-          left: cx,
-          top: cy,
-          width: 50,
-          height: 50,
-          background: 'red',
-        }}
-      />
-
-      {/* Player orbitando */}
-      <div
-        style={{
-          position: 'absolute',
-          left: px,
-          top: py,
-          width: 30,
-          height: 30,
-          background: 'lime',
-        }}
-      />
+    <div className="game-container" style={{ width, height }}>
+      <div className="boss" style={{ left: cx, top: cy }} />
+      <div className={`player${dashActive ? ' dash' : ''}`} style={{ left: px, top: py }} />
     </div>
   );
 }
