@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './app.css';      // ← não esqueça
+import './app.css';
 
 export default function App() {
   const width  = 400;
@@ -7,25 +7,32 @@ export default function App() {
   const radius = 100;
   const baseSpeed      = 0.03;
   const dashMultiplier = 3;
-  const dashDuration   = 0.5;
-  const dashKey        = 'Shift';
+  const dashDuration   = 0.1;     // agora 0,1s
+  const dashKey        = 'Space'; // usa e.code
 
   const [angle, setAngle]     = useState(0);
   const [dashActive, setDash] = useState(false);
   const keys = useRef({ ArrowLeft: false, ArrowRight: false });
 
-  // captura teclas
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key in keys.current) keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = true;
-      if (e.key === dashKey && !dashActive) {
+      // controle de órbita
+      if (e.key in keys.current) {
+        keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = true;
+      }
+      // ativação de dash
+      if (e.code === dashKey && !dashActive) {
         setDash(true);
         setTimeout(() => setDash(false), dashDuration * 1000);
       }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key in keys.current) keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = false;
+      if (e.key in keys.current) {
+        keys.current[e.key as 'ArrowLeft' | 'ArrowRight'] = false;
+      }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
@@ -34,13 +41,15 @@ export default function App() {
     };
   }, [dashActive]);
 
-  // loop de animação
   useEffect(() => {
     let rafId: number;
     const loop = () => {
       setAngle(prev => {
+        const speed = dashActive
+          ? baseSpeed * dashMultiplier
+          : baseSpeed;
+
         let next = prev;
-        const speed = dashActive ? baseSpeed * dashMultiplier : baseSpeed;
         if (keys.current.ArrowLeft)  next -= speed;
         if (keys.current.ArrowRight) next += speed;
         return next;
@@ -58,8 +67,11 @@ export default function App() {
 
   return (
     <div className="game-container" style={{ width, height }}>
-      <div className="boss" style={{ left: cx, top: cy }} />
-      <div className={`player${dashActive ? ' dash' : ''}`} style={{ left: px, top: py }} />
+      <div className="boss"  style={{ left: cx, top: cy }} />
+      <div
+        className={`player${dashActive ? ' dash' : ''}`}
+        style={{ left: px, top: py }}
+      />
     </div>
   );
 }
